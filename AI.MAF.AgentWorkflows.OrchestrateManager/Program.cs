@@ -1,5 +1,7 @@
-﻿using Microsoft.Agents.AI;
+﻿using AI.MAF.AgentWorkflows.OrchestrateManager.Executors;
+using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
+using Microsoft.Agents.AI.Workflows.Specialized.Magentic;
 using Microsoft.Extensions.AI;
 using OpenAI;
 using System.ClientModel;
@@ -73,9 +75,26 @@ foreach (WorkflowEvent evt in run.OutgoingEvents)
         Console.WriteLine($"{failedEvent}");
     if (evt is ExecutorCompletedEvent completedEvent)
         Console.WriteLine($"{completedEvent}");
+
     if (evt is WorkflowOutputEvent output)
     {
         Console.Write($"{output.Data}");
+    }
+
+    if (evt is MagenticPlanCreatedEvent magenticPlanCreatedEvent)
+    {
+        Console.Write($"{magenticPlanCreatedEvent.Data}");
+    }
+    if (evt is RequestInfoEvent requestInfoEvent)
+    {
+        Console.Write($"{requestInfoEvent.Data}");
+    }
+
+
+
+    if (evt is SuperStepCompletedEvent superStepCompleted)
+    {
+        Console.Write($"{superStepCompleted.Data}");
     }
 }
 Console.WriteLine("----------------------------------------------------------");
@@ -89,8 +108,28 @@ var responseAgent = chatClient.AsAIAgent(name: "shubham-sample-agent"
         "You have to gather output from four other agents with different modes of work type viz Plumbing, HouseKeeping, Electrical or Restaurant." +
         "You also provide assurance to user on quick resolution" +
         "Sample output: Please be assured,We have informed plumbing team and plumbing issue with the bathroom sink. It will be fixed this afternoon.");
-var workflow1 = new WorkflowBuilder(hotelmanagerAgent)
-    .AddFanOutEdge(hotelmanagerAgent, [plumbingAgent, housekeepingAgent, electricalAgent, restaurantAgent])
-    .AddFanInBarrierEdge([plumbingAgent, housekeepingAgent, electricalAgent, restaurantAgent], responseAgent)
-    .WithOutputFrom([responseAgent])
+var options = ExecutorOptions.Default;
+options.AutoSendMessageHandlerResultObject = true;
+options.AutoYieldOutputHandlerResultObject = true;
+var hotelManagerAgentExecutor = new HotelManagerAgentExecutor(hotelmanagerAgent, options);
+var plumbingAgentExecutor = new PlumbingAgentExecutor(plumbingAgent, options);
+var housekeepingAgentExecutor = new HousekeepingAgentExecutor(housekeepingAgent, options);
+var electricalAgentExecutor = new ElectricalAgentExecutor(electricalAgent, options);
+var restaurantAgentExecutor = new RestaurantAgentExecutor(restaurantAgent, options);
+var responseAgentExecutor = new ResponseAgentExecutor(responseAgent, options);
+
+var workflow1 = new WorkflowBuilder(hotelManagerAgentExecutor)
+    .AddFanOutEdge(hotelManagerAgentExecutor, [plumbingAgentExecutor, housekeepingAgentExecutor, electricalAgentExecutor, restaurantAgentExecutor])
+    .AddFanInBarrierEdge([plumbingAgentExecutor, housekeepingAgentExecutor, electricalAgentExecutor, restaurantAgentExecutor], responseAgentExecutor)
+    .WithOutputFrom([responseAgentExecutor])
     .Build();
+
+var streamingRun1 = await InProcessExecution.RunStreamingAsync(workflow1    , userQuery);
+
+await foreach (WorkflowEvent evt in streamingRun1.WatchStreamAsync())
+{
+    if (evt is WorkflowOutputEvent output)
+    {
+        Console.WriteLine($"Final answer: {output.Data}");
+    }
+}

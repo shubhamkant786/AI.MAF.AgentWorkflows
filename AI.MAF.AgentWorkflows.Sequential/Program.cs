@@ -1,4 +1,5 @@
-﻿using Microsoft.Agents.AI;
+﻿using AI.MAF.AgentWorkflows.Sequential.Executors;
+using Microsoft.Agents.AI;
 using Microsoft.Agents.AI.Workflows;
 using Microsoft.Extensions.AI;
 using OpenAI;
@@ -20,17 +21,21 @@ IChatClient chatClient = openAIClient.GetChatClient(deploymentName).AsIChatClien
 AIAgent queryTravelPlannerAgent = chatClient
         .AsAIAgent(name: "shubham-sample-agent"
         , instructions: "You are a travel query classifier analysing agent.");
-var queryTravelPlannerAgentExecutor = queryTravelPlannerAgent.BindAsExecutor();
 
 AIAgent queryItineraryReviewerAgent = chatClient
         .AsAIAgent(name: "shubham-sample-agent"
         , instructions: "You are a travel itinerary reviewer and analysing agent.");
-var queryItineraryReviewerAgentExecutor = queryItineraryReviewerAgent.BindAsExecutor();
 
 AIAgent queryItineraryComposerAgent = chatClient
         .AsAIAgent(name: "shubham-sample-agent"
         , instructions: "You are a travel itinerary composer agent.");
-var queryItineraryComposerAgentExecutor = queryItineraryComposerAgent.BindAsExecutor();
+
+var options = ExecutorOptions.Default;
+options.AutoSendMessageHandlerResultObject = true;
+options.AutoYieldOutputHandlerResultObject = true;
+var queryTravelPlannerAgentExecutor = new QueryTravelPlannerAgentExecutor(queryTravelPlannerAgent, options);
+var queryItineraryReviewerAgentExecutor = new QueryItineraryReviewerAgentExecutor(queryItineraryReviewerAgent, options);
+var queryItineraryComposerAgentExecutor = new QueryItineraryComposerAgentExecutor(queryItineraryComposerAgent, options);
 
 var workflow = new WorkflowBuilder(queryTravelPlannerAgentExecutor)
     .AddChain(queryTravelPlannerAgentExecutor,

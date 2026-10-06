@@ -20,19 +20,19 @@ var openAIClient = new OpenAIClient(new ApiKeyCredential(apiKey),
 IChatClient chatClient = openAIClient.GetChatClient(deploymentName).AsIChatClient();
 
 AIAgent analystAgent = chatClient
-        .AsAIAgent(name: "shubham-sample-agent"
+        .AsAIAgent(name: "analyst-agent"
         , instructions: "You are a analyst agent");
 
 AIAgent developerAgent = chatClient
-        .AsAIAgent(name: "shubham-sample-agent"
+        .AsAIAgent(name: "developer-agent"
         , instructions: "You are a developer agent");
 
 AIAgent testerAgent = chatClient
-        .AsAIAgent(name: "shubham-sample-agent"
+        .AsAIAgent(name: "tester-agent"
         , instructions: "You are a tester agent");
 
 AIAgent deployAgent = chatClient
-        .AsAIAgent(name: "shubham-sample-agent"
+        .AsAIAgent(name: "deploy-agent"
         , instructions: "You are a deploy agent");
 var options = ExecutorOptions.Default;
 options.AutoSendMessageHandlerResultObject = true;
@@ -44,8 +44,8 @@ var deployAgentExecutor = new DeployAgentExecutor(deployAgent, options);
 var notificationExecutor = new NotificationExecutor(options);
 
 var workflow = new WorkflowBuilder(analystAgentExecutor)
-    .AddEdge(analystAgentExecutor, developerAgentExecutor)
-    .AddEdge(developerAgentExecutor, testerAgentExecutor)
+    .AddEdge<AnalystAgentOutput>(analystAgentExecutor, developerAgentExecutor, t=>t is not null)
+    .AddEdge<DeveloperAgentOutput>(developerAgentExecutor, testerAgentExecutor, t=>t is not null)
     .AddEdge<TesterAgentOutput>(testerAgentExecutor, deployAgentExecutor, t => t.IsPassed)
     .AddEdge(deployAgentExecutor, notificationExecutor)
     .Build();
