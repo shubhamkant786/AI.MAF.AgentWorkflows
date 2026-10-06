@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="AI.MAF.AgentWorkflows.Agent2AgentHandoff/AI.MAF.AgentWorkflows.Agent2AgentHandoff.csproj" />
+  <Project Path="AI.MAF.AgentWorkflows.AutonomousChatGroupManager/AI.MAF.AgentWorkflows.AutonomousChatGroupManager.csproj" />
+  <Project Path="AI.MAF.AgentWorkflows.OrchestrateManager/AI.MAF.AgentWorkflows.OrchestrateManager.csproj" />
+  <Project Path="AI.MAF.AgentWorkflows.Parallel/AI.MAF.AgentWorkflows.Parallel.csproj" />
+  <Project Path="AI.MAF.AgentWorkflows.Sequential/AI.MAF.AgentWorkflows.Sequential.csproj" />
+</Solution>
